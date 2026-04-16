@@ -1,0 +1,291 @@
+openapi: 3.0.0
+info:
+  title: API de Gestión de Tareas
+  version: 1.0.0
+  description: API para la gestión de tareas con autenticación JWT y roles.
+
+servers:
+  - url: http://localhost:3000
+    description: Servidor de desarrollo
+
+paths:
+  /api/registrar:
+    post:
+      summary: Registrar un nuevo usuario
+      tags:
+        - Autenticación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Usuario registrado con éxito
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '500':
+          description: Error del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/login:
+    post:
+      summary: Iniciar sesión
+      tags:
+        - Autenticación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Inicio de sesión exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Credenciales inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/logout:
+    post:
+      summary: Cerrar sesión (invalidar token)
+      tags:
+        - Autenticación
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '401':
+          description: Token no proporcionado o inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+/api/tareas:
+    get:
+      summary: Listar todas las tareas
+      tags:
+        - Tareas
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Tareas obtenidas correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TareasListResponse'
+        '401':
+          description: No autorizado
+        '500':
+          description: Error del servidor
+
+    post:  # <--- Ahora el POST vive dentro del mismo bloque /api/tareas
+      summary: Crear una nueva tarea
+      tags:
+        - Tareas
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TareaRequest'
+      responses:
+        '201': # Cambiado a 201 porque es creación
+          description: Tarea creada correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TareaResponse'
+        '401':
+          description: No autorizado
+        '403':
+          description: Prohibido (requiere rol admin)
+        '500':
+          description: Error del servidor
+  /api/tareas/{id}:
+    delete:
+      summary: Eliminar una tarea (Solo Admin)
+      tags:
+        - Tareas
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la tarea a eliminar
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tarea eliminada correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TareaResponse'
+        '401':
+          description: No autorizado
+        '403':
+          description: Prohibido (requiere rol admin)
+        '500':
+          description: Error del servidor
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          example: admin@example.com
+        rol:
+          type: string
+          example: admin
+
+    Tarea:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 10
+        titulo:
+          type: string
+          example: "Finalizar informe"
+        descripcion:
+          type: string
+          example: "Completar el informe trimestral para la reunión"
+        completada:
+          type: boolean
+          example: false
+        usuarioId:
+          type: integer
+          example: 1
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          example: admin@example.com
+        password:
+          type: string
+          example: "admin123"
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          example: newuser@example.com
+        password:
+          type: string
+          example: "password123"
+        rol:
+          type: string
+          example: "usuario"
+
+    LoginResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Login exitoso"
+        token:
+          type: string
+          description: Token JWT para autenticación
+
+    RegisterResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Usuario registrado con éxito"
+        data:
+          $ref: '#/components/schemas/User'
+
+    TareaRequest:
+      type: object
+      required:
+        - titulo
+        - descripcion
+      properties:
+        titulo:
+          type: string
+          example: "Nueva Tarea"
+        descripcion:
+          type: string
+          example: "Descripción de la tarea"
+        completada:
+          type: boolean
+          default: false
+
+    TareaResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Operación exitosa"
+        data:
+          $ref: '#/components/schemas/Tarea'
+
+    TareasListResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Tareas obtenidas correctamente"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tarea'
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Acción realizada con éxito"
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Ha ocurrido un error inesperado"

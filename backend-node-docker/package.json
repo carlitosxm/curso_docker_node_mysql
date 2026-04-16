@@ -4,18 +4,21 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "nodemon src/index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^5.14.0",
+    "@prisma/client": "^5.22.0",
+    "@scalar/express-api-reference": "^0.9.8",
+    "axios": "^1.15.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.1",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.3",
     "nodemon": "^3.1.10",
-    "prisma": "^5.14.0"
-  },
-  "scripts": {
-    "start": "nodemon src/index.js"
+    "prisma": "^5.22.0"
   }
 }
